@@ -23,6 +23,15 @@ import { getSettings } from '@server/lib/settings';
 import { uniqWith } from 'lodash';
 
 const imdbRegex = new RegExp(/imdb:\/\/(tt[0-9]+)/);
+// Cinealpardi: the xbmcnfo / xbmcnfotv agents (used so Plex respects TMM's
+// NFOs) expose the IMDB id inside the guid, e.g.
+// "com.plexapp.agents.xbmcnfo://tt1166113?lang=xn". Match that so those
+// libraries can be flagged as available. Numeric-only xbmcnfotv guids are
+// Plex hash fallbacks (not real external ids) and are intentionally skipped.
+const xbmcnfoImdbRegex = new RegExp(/xbmcnfo(?:tv)?:\/\/(tt[0-9]+)/);
+// xbmcnfotv shows sometimes carry a real TheTVDB id (<=7 digits). Plex hash
+// fallbacks are ~19 digits, so the length anchor keeps us from matching them.
+const xbmcnfoTvdbRegex = new RegExp(/xbmcnfotv:\/\/([0-9]{1,7})(?:\?|$)/);
 const tmdbRegex = new RegExp(/tmdb:\/\/([0-9]+)/);
 const tvdbRegex = new RegExp(/tvdb:\/\/([0-9]+)/);
 const tmdbShowRegex = new RegExp(/themoviedb:\/\/([0-9]+)/);
@@ -447,6 +456,26 @@ class PlexScanner
           imdbId: mediaIds.imdbId,
         });
         mediaIds.tmdbId = tmdbMedia.id;
+      }
+      // Check if the agent is xbmcnfo / xbmcnfotv (IMDB id embedded)
+    } else if (plexitem.guid.match(xbmcnfoImdbRegex)) {
+      const xbmcMatch = plexitem.guid.match(xbmcnfoImdbRegex);
+      if (xbmcMatch) {
+        mediaIds.imdbId = xbmcMatch[1];
+        const tmdbMedia = await this.tmdb.getMediaByImdbId({
+          imdbId: mediaIds.imdbId,
+        });
+        mediaIds.tmdbId = tmdbMedia.id;
+      }
+      // Check if the agent is xbmcnfotv with a real TheTVDB id
+    } else if (plexitem.guid.match(xbmcnfoTvdbRegex)) {
+      const xbmcTvdbMatch = plexitem.guid.match(xbmcnfoTvdbRegex);
+      if (xbmcTvdbMatch) {
+        const show = await this.tmdb.getShowByTvdbId({
+          tvdbId: Number(xbmcTvdbMatch[1]),
+        });
+        mediaIds.tvdbId = Number(xbmcTvdbMatch[1]);
+        mediaIds.tmdbId = show.id;
       }
       // Check if the agent is TMDB
     } else if (plexitem.guid.match(tmdbRegex)) {
