@@ -403,7 +403,7 @@ class Settings {
       vapidPublic: '',
       main: {
         apiKey: '',
-        applicationTitle: 'Seerr',
+        applicationTitle: 'Cinealpardi',
         applicationUrl: '',
         cacheImages: false,
         defaultPermissions: Permission.REQUEST,

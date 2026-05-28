@@ -11,6 +11,38 @@ module.exports = {
   ],
   theme: {
     extend: {
+      colors: {
+        // Cinealpardi · Cinematic Noir — la marca usa "indigo" como acento
+        // principal y "purple" en los gradientes. Redefinimos ambas rampas
+        // hacia el ámbar marquesina (#f5a623) para rebrandear toda la UI sin
+        // tocar las ~100 clases indigo-*/purple-* repartidas por los componentes.
+        indigo: {
+          50: '#fff8eb',
+          100: '#fdecc8',
+          200: '#fbd996',
+          300: '#f9c456',
+          400: '#f7b333',
+          500: '#f5a623',
+          600: '#d98a14',
+          700: '#b46d10',
+          800: '#8f560f',
+          900: '#74460f',
+          950: '#432606',
+        },
+        purple: {
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb9d3c',
+          500: '#f5840f',
+          600: '#dd6a08',
+          700: '#b75009',
+          800: '#923f0f',
+          900: '#78350f',
+          950: '#431a06',
+        },
+      },
       transitionProperty: {
         'max-height': 'max-height',
         width: 'width',
@@ -86,8 +118,11 @@ module.exports = {
     },
   },
   plugins: [
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('@tailwindcss/forms'),
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('@tailwindcss/typography'),
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('@tailwindcss/aspect-ratio'),
   ],
 };
