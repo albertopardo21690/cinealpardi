@@ -816,4 +816,83 @@ authRoutes.post('/reset-password/:guid', async (req, res, next) => {
   return res.status(200).json({ status: 'ok' });
 });
 
+// Cinealpardi — passwordless profile switcher ("¿quién pide hoy?").
+// Lists selectable profiles for the space selector. Only enabled when
+// openProfileLogin is on; meant for private family deployments behind a
+// single entry gate, never exposed openly on the public internet.
+authRoutes.get('/profiles', async (req, res, next) => {
+  const settings = getSettings();
+
+  if (!settings.main.openProfileLogin) {
+    return next({ status: 404, message: 'Profile login is disabled.' });
+  }
+
+  try {
+    const users = await getRepository(User).find({
+      order: { id: 'ASC' },
+    });
+
+    return res.status(200).json(
+      users.map((user) => ({
+        id: user.id,
+        displayName: user.displayName,
+        avatar: user.avatar,
+        permissions: user.permissions,
+        isAdmin: user.hasPermission(Permission.ADMIN),
+      }))
+    );
+  } catch (e) {
+    logger.error('Failed to list profiles', {
+      label: 'API',
+      errorMessage: e.message,
+      ip: req.ip,
+    });
+    return next({ status: 500, message: 'Unable to list profiles.' });
+  }
+});
+
+// Establishes a session for the chosen profile without a password.
+authRoutes.post('/profile', async (req, res, next) => {
+  const settings = getSettings();
+  const body = req.body as { userId?: number };
+
+  if (!settings.main.openProfileLogin) {
+    return next({ status: 404, message: 'Profile login is disabled.' });
+  }
+
+  if (!body.userId) {
+    return next({ status: 400, message: 'You must provide a profile.' });
+  }
+
+  try {
+    const user = await getRepository(User).findOne({
+      where: { id: body.userId },
+    });
+
+    if (!user) {
+      return next({ status: 403, message: 'Access denied.' });
+    }
+
+    if (req.session) {
+      req.session.userId = user.id;
+    }
+
+    logger.info('Profile sign-in', {
+      label: 'API',
+      ip: req.ip,
+      userId: user.id,
+      displayName: user.displayName,
+    });
+
+    return res.status(200).json(user.filter());
+  } catch (e) {
+    logger.error('Something went wrong with profile sign-in', {
+      label: 'API',
+      errorMessage: e.message,
+      ip: req.ip,
+    });
+    return next({ status: 500, message: 'Unable to authenticate.' });
+  }
+});
+
 export default authRoutes;

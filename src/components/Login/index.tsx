@@ -8,6 +8,7 @@ import LanguagePicker from '@app/components/Layout/LanguagePicker';
 import JellyfinLogin from '@app/components/Login/JellyfinLogin';
 import LocalLogin from '@app/components/Login/LocalLogin';
 import PlexLoginButton from '@app/components/Login/PlexLoginButton';
+import ProfileSelector from '@app/components/Login/ProfileSelector';
 import useSettings from '@app/hooks/useSettings';
 import { useUser } from '@app/hooks/useUser';
 import defineMessages from '@app/utils/defineMessages';
@@ -40,6 +41,9 @@ const Login = () => {
   const [error, setError] = useState('');
   const [isProcessing, setProcessing] = useState(false);
   const [authToken, setAuthToken] = useState<string | undefined>(undefined);
+  // Cinealpardi: when the passwordless profile switcher is on, show the
+  // "¿quién pide hoy?" selector first. Users can fall back to password login.
+  const [usePassword, setUsePassword] = useState(false);
   const [mediaServerLogin, setMediaServerLogin] = useState(
     settings.currentSettings.mediaServerLogin
   );
@@ -148,6 +152,18 @@ const Login = () => {
         ))
       )),
   ].filter((o): o is JSX.Element => !!o);
+
+  if (settings.currentSettings.openProfileLogin && !usePassword) {
+    return (
+      <>
+        <PageTitle title={intl.formatMessage(messages.signin)} />
+        <ProfileSelector
+          backdrops={backdrops}
+          onUsePassword={() => setUsePassword(true)}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="relative flex min-h-screen flex-col bg-gray-900 py-14">

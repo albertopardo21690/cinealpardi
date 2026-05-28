@@ -144,6 +144,11 @@ export interface MainSettings {
   localLogin: boolean;
   mediaServerLogin: boolean;
   newPlexLogin: boolean;
+  // Cinealpardi: passwordless profile switcher ("¿quién pide hoy?").
+  // When true, /auth/profiles and /auth/profile allow selecting a user
+  // without a password. Intended for private family deployments behind a
+  // single entry gate — do NOT expose openly on the public internet.
+  openProfileLogin: boolean;
   discoverRegion: string;
   streamingRegion: string;
   originalLanguage: string;
@@ -195,6 +200,7 @@ interface FullPublicSettings extends PublicSettings {
   hideBlocklisted: boolean;
   localLogin: boolean;
   mediaServerLogin: boolean;
+  openProfileLogin: boolean;
   movie4kEnabled: boolean;
   series4kEnabled: boolean;
   discoverRegion: string;
@@ -416,6 +422,7 @@ class Settings {
         localLogin: true,
         mediaServerLogin: true,
         newPlexLogin: true,
+        openProfileLogin: false,
         discoverRegion: '',
         streamingRegion: '',
         originalLanguage: '',
@@ -710,6 +717,7 @@ class Settings {
       hideBlocklisted: this.data.main.hideBlocklisted,
       localLogin: this.data.main.localLogin,
       mediaServerLogin: this.data.main.mediaServerLogin,
+      openProfileLogin: this.data.main.openProfileLogin,
       jellyfinExternalHost: this.data.jellyfin.externalHostname,
       jellyfinForgotPasswordUrl: this.data.jellyfin.jellyfinForgotPasswordUrl,
       movie4kEnabled: this.data.radarr.some(

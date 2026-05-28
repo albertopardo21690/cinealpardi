@@ -10,12 +10,13 @@ export interface SettingsContextProps {
 
 const defaultSettings = {
   initialized: false,
-  applicationTitle: 'Seerr',
+  applicationTitle: 'Cinealpardi',
   applicationUrl: '',
   hideAvailable: false,
   hideBlocklisted: false,
   localLogin: true,
   mediaServerLogin: true,
+  openProfileLogin: false,
   movie4kEnabled: false,
   series4kEnabled: false,
   discoverRegion: '',

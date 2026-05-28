@@ -4020,6 +4020,62 @@ paths:
               required:
                 - email
                 - password
+  /auth/profiles:
+    get:
+      summary: List selectable profiles (Cinealpardi)
+      description: Returns the list of profiles for the passwordless "¿quién pide hoy?" space selector. Only available when `openProfileLogin` is enabled.
+      security: []
+      tags:
+        - auth
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: number
+                    displayName:
+                      type: string
+                    avatar:
+                      type: string
+                    permissions:
+                      type: number
+                    isAdmin:
+                      type: boolean
+        '404':
+          description: Profile login is disabled
+  /auth/profile:
+    post:
+      summary: Sign in as a profile without a password (Cinealpardi)
+      description: Establishes a session for the chosen profile. Only available when `openProfileLogin` is enabled.
+      security: []
+      tags:
+        - auth
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Profile login is disabled
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: number
+              required:
+                - userId
   /auth/logout:
     post:
       summary: Sign out and clear session cookie
