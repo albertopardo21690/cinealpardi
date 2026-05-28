@@ -29,6 +29,8 @@ const messages = defineMessages('components.RequestModal.AdvancedRequester', {
   advancedoptions: 'Advanced',
   destinationserver: 'Destination Server',
   qualityprofile: 'Quality Profile',
+  calidad: 'Calidad',
+  idioma: 'Idioma',
   rootfolder: 'Root Folder',
   animenote: '* This series is an anime.',
   default: '{name} (Default)',
@@ -306,6 +308,32 @@ const AdvancedRequester = ({
     return null;
   }
 
+  // Cinealpardi: split the single quality-profile dropdown into "Calidad" +
+  // "Idioma" when profiles follow the "Calidad · Idioma" naming convention.
+  const matrixProfiles = (serverData?.profiles ?? []).filter((p) =>
+    p.name.includes(' · ')
+  );
+  const useMatrix = matrixProfiles.length > 0;
+  const qualityOptions = [
+    ...new Set(matrixProfiles.map((p) => p.name.split(' · ')[0])),
+  ];
+  const languageOptions = [
+    ...new Set(matrixProfiles.map((p) => p.name.split(' · ')[1])),
+  ];
+  const currentProfileName =
+    serverData?.profiles.find((p) => p.id === selectedProfile)?.name ?? '';
+  const [currentQuality, currentLanguage] = currentProfileName.includes(' · ')
+    ? currentProfileName.split(' · ')
+    : [qualityOptions[0], languageOptions[0]];
+  const selectMatrixProfile = (quality: string, language: string) => {
+    const match = matrixProfiles.find(
+      (p) => p.name === `${quality} · ${language}`
+    );
+    if (match) {
+      setSelectedProfile(match.id);
+    }
+  };
+
   return (
     <>
       <div className="mb-2 mt-4 flex items-center text-lg font-semibold">
@@ -344,56 +372,105 @@ const AdvancedRequester = ({
                 </select>
               </div>
             )}
-            {(isValidating ||
-              !serverData ||
-              serverData.profiles.length > 1) && (
-              <div className="mb-3 w-full flex-shrink-0 flex-grow last:pr-0 md:w-1/4 md:pr-4">
-                <label htmlFor="profile">
-                  {intl.formatMessage(messages.qualityprofile)}
-                </label>
-                <select
-                  id="profile"
-                  name="profile"
-                  value={selectedProfile}
-                  onChange={(e) => setSelectedProfile(Number(e.target.value))}
-                  onBlur={(e) => setSelectedProfile(Number(e.target.value))}
-                  className="border-gray-700 bg-gray-800"
-                  disabled={isValidating || !serverData}
-                >
-                  {(isValidating || !serverData) && (
-                    <option value="">
-                      {intl.formatMessage(globalMessages.loading)}
-                    </option>
-                  )}
-                  {!isValidating &&
-                    serverData &&
-                    serverData.profiles
-                      .toSorted((a, b) =>
-                        a.name.localeCompare(b.name, intl.locale, {
-                          numeric: true,
-                          sensitivity: 'base',
-                        })
-                      )
-                      .map((profile) => (
-                        <option
-                          key={`profile-list${profile.id}`}
-                          value={profile.id}
-                        >
-                          {isAnime &&
-                          serverData.server.activeAnimeProfileId === profile.id
-                            ? intl.formatMessage(messages.default, {
-                                name: profile.name,
-                              })
-                            : !isAnime &&
-                                serverData.server.activeProfileId === profile.id
+            {useMatrix ? (
+              <>
+                <div className="mb-3 w-full flex-shrink-0 flex-grow last:pr-0 md:w-1/4 md:pr-4">
+                  <label htmlFor="calidad">
+                    {intl.formatMessage(messages.calidad)}
+                  </label>
+                  <select
+                    id="calidad"
+                    name="calidad"
+                    value={currentQuality}
+                    onChange={(e) =>
+                      selectMatrixProfile(e.target.value, currentLanguage)
+                    }
+                    className="border-gray-700 bg-gray-800"
+                    disabled={isValidating || !serverData}
+                  >
+                    {qualityOptions.map((q) => (
+                      <option key={`calidad-${q}`} value={q}>
+                        {q}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-3 w-full flex-shrink-0 flex-grow last:pr-0 md:w-1/4 md:pr-4">
+                  <label htmlFor="idioma">
+                    {intl.formatMessage(messages.idioma)}
+                  </label>
+                  <select
+                    id="idioma"
+                    name="idioma"
+                    value={currentLanguage}
+                    onChange={(e) =>
+                      selectMatrixProfile(currentQuality, e.target.value)
+                    }
+                    className="border-gray-700 bg-gray-800"
+                    disabled={isValidating || !serverData}
+                  >
+                    {languageOptions.map((l) => (
+                      <option key={`idioma-${l}`} value={l}>
+                        {l}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            ) : (
+              (isValidating ||
+                !serverData ||
+                serverData.profiles.length > 1) && (
+                <div className="mb-3 w-full flex-shrink-0 flex-grow last:pr-0 md:w-1/4 md:pr-4">
+                  <label htmlFor="profile">
+                    {intl.formatMessage(messages.qualityprofile)}
+                  </label>
+                  <select
+                    id="profile"
+                    name="profile"
+                    value={selectedProfile}
+                    onChange={(e) => setSelectedProfile(Number(e.target.value))}
+                    onBlur={(e) => setSelectedProfile(Number(e.target.value))}
+                    className="border-gray-700 bg-gray-800"
+                    disabled={isValidating || !serverData}
+                  >
+                    {(isValidating || !serverData) && (
+                      <option value="">
+                        {intl.formatMessage(globalMessages.loading)}
+                      </option>
+                    )}
+                    {!isValidating &&
+                      serverData &&
+                      serverData.profiles
+                        .toSorted((a, b) =>
+                          a.name.localeCompare(b.name, intl.locale, {
+                            numeric: true,
+                            sensitivity: 'base',
+                          })
+                        )
+                        .map((profile) => (
+                          <option
+                            key={`profile-list${profile.id}`}
+                            value={profile.id}
+                          >
+                            {isAnime &&
+                            serverData.server.activeAnimeProfileId ===
+                              profile.id
                               ? intl.formatMessage(messages.default, {
                                   name: profile.name,
                                 })
-                              : profile.name}
-                        </option>
-                      ))}
-                </select>
-              </div>
+                              : !isAnime &&
+                                  serverData.server.activeProfileId ===
+                                    profile.id
+                                ? intl.formatMessage(messages.default, {
+                                    name: profile.name,
+                                  })
+                                : profile.name}
+                          </option>
+                        ))}
+                  </select>
+                </div>
+              )
             )}
             {(isValidating ||
               !serverData ||
